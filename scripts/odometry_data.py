@@ -7,7 +7,7 @@ class OdometryData(object):
     """
     def __init__(self, r1, tr, r2):
         self.r1 = r1
-        self.t = tr
+        self.tr = tr
         self.r2 = r2
 
     def __str__(self):

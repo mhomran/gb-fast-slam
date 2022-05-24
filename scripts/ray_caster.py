@@ -19,7 +19,7 @@ CM_IN_METER = 100
 
 class RayCaster:
   def __init__(self, map, angle_range=250, angle_accuracy=2, 
-  length_range=12, pixel_size=4, occ_th=.9):
+  length_range=12, pixel_size=.05, occ_th=.9):
     """
     Description: constructor for the ray caster.
 
@@ -74,52 +74,48 @@ class RayCaster:
     dist = np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
     return dist
 
-  def cast(self, x, y, theta, angle_min, angle_max, show_rays=False, 
-  show_collided=False, save_results=False):
+  def cast(self, pose, scan, show_rays=False, show_collided=False):
     """
     Description: Cast a ray.
       
     Input:
-      - x: the x coordinate on the map.
-      - y: the y coordinate on the map.
-      - theta: the heading direction on the map in degrees (1-360).
-      0 degree makes the robot look horizontally right. The angle of the
-      robot is incremented in the clock wise direction (i.e. 90 degree will
-      make the robot look vertically down). (MAP FRAME)
-      - angle_min: the minimum angle that the scan starts from.
-      - angle_max: the maximum angle that the scan ends at.
+      - pose: robot pose (x, y, theta).
+      - scan: LaserScan msg
       - show_rays: if True, show the image with the rays shown.
       - show_collided: if True, show the image with the collided points
       shown.
-      - save_results: If True, save the measurements in a text file. 
     
     Output:
       - measurements: numpy array for the distances in pixels.
       The ray that's not collided has a distance of -1
     """
-    
-    if show_rays or show_collided:
-      img = cv.cvtColor((self.map * 255).astype(np.uint8),cv.COLOR_GRAY2RGB)
+    x, y, theta = pose
 
-    if save_results:
-      file = open(f'Measurements_theta_{theta}_x_{x}_y_{y}_angle_accuracy_{self.angle_accuracy}.txt', 'w')
-    
-    start_angle = theta + angle_min
-    end_angle = theta + angle_max
-    start_len = 1
-    # from metric unit to the number of pixels 
-    end_len = (self.length_range * CM_IN_METER) // self.pixel_size 
+    angle_min = scan.angle_min
+    angle_max = scan.angle_max
+    angle_increment = int(np.degrees(scan.angle_increment))
+
+    start_angle = theta + int(np.degrees(angle_min))
+    end_angle = theta + int(np.degrees(angle_max))
+    start_len = int(scan.range_min / self.pixel_size) 
+    end_len = int(scan.range_max / self.pixel_size) 
+
+    if show_rays or show_collided:
+      img = self.map.copy()
+      cv.normalize(img, img, 0, 255, cv.NORM_MINMAX)
+      img = cv.cvtColor(img.astype(np.uint8),cv.COLOR_GRAY2RGB)
+  
     
     # +1 because the measurement at the original pose
-    measurements = np.ones((end_angle-start_angle)//self.angle_accuracy + 1) * -1
+    measurements = np.ones((end_angle-start_angle)//angle_increment + 1) * -1
 
-    for i, angle in enumerate(range(start_angle, end_angle + 1, self.angle_accuracy)):
-      for len in range(start_len, end_len + 1):
-        tobe_checked_x = x + int(len * np.cos(np.radians(angle)))
+    for i, angle in enumerate(range(start_angle, end_angle, angle_increment)):
+      for dst in range(start_len, end_len + 1):
+        tobe_checked_x = x + int(dst * np.cos(np.radians(angle)))
         if not (0 <= tobe_checked_x < self.map.shape[1]):
           break 
         
-        tobe_checked_y = y + int(len * np.sin(np.radians(angle)))
+        tobe_checked_y = y + int(dst * np.sin(np.radians(angle)))
         if not (0 <= tobe_checked_y < self.map.shape[0]):
           break 
         
@@ -129,34 +125,19 @@ class RayCaster:
           cv.circle(img, tobe_checked, 1, BGR_RED_COLOR, -1)
         
         if self._is_collided(tobe_checked): 
-          measurements[i] = len  
+          measurements[i] = dst  
           
           if show_collided:
             cv.circle(img, tobe_checked, 2, BGR_BLUE_COLOR, -1)
-          
-          if save_results:
-            file.write(f'theta:{angle}_x:{tobe_checked_x}_y:{tobe_checked_y}_distance:{measurements[i]}\n')
 
           # no need to progress with that ray since it's collided
           break 
       
-      # save it even it's not collided
-      if save_results and measurements[i] < 0:
-        file.write(f'theta:{angle}_x:{tobe_checked_x}_y:{tobe_checked_y}_distance:{measurements[i]}\n')
 
     if show_rays or show_collided:
       cv.circle(img, (x, y), 2, BGR_GREEN_COLOR, 5)
-
-      if save_results:
-        cv.imwrite(f'Measurements_theta_{theta}_x_{x}_y_{y}_angle_accuracy_{self.angle_accuracy}.png', img)
-
       cv.imshow("Ray Casting", img)
-      cv.waitKey(0)
 
-    if save_results:
-      
-      file.close()
-      
     return measurements    
 
 if __name__ == '__main__':

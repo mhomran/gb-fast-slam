@@ -1,3 +1,4 @@
+from glob import glob
 import rospy
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
@@ -6,16 +7,18 @@ from tf.transformations import euler_from_quaternion
 from particle import Particle
 from gbfs_algorithm import FastSlam
 from odometry_data import OdometryData
+import cv2 as cv
 
 ms_to_sec = lambda x: x * (10**-3)
 ms_to_ns = lambda x: x * (10**6)
 s_to_ns = lambda x: x * (10**9)
 
-INTERVAL_IN_MS = 200
+INTERVAL_IN_MS = 50
 INTERVAL_IN_S = ms_to_sec(INTERVAL_IN_MS)
 INTERVAL_IN_NS = ms_to_ns(INTERVAL_IN_MS)
 
 FREQ = 1/INTERVAL_IN_S
+print(FREQ)
 
 
 t1 = 0 # t
@@ -25,34 +28,48 @@ r1 = 0 # initial rotation in radians counterclockwise
 tr = 0 # translation
 r2 = 0 # initial rotation in radians counterclockwise
 
+gscan = False
+godom = False
 
-def lidar_callback(data):
-    rospy.loginfo(data.ranges)
+read_first_odom = False
+
+def lidar_callback(scan):
+    global gscan
+    gscan = scan
 
 
 def odom_callback(odom):
     global t1
+    global pt1 
+    global pt2 
+    global r1 
+    global tr
+    global r2
+    global godom
+    global read_first_odom
 
     t2 = int(str(odom.header.stamp)) 
-
+    
     if t2 - t1 >= INTERVAL_IN_NS:
         t1 = t2
 
         pt1[:] = pt2[:]
+            
         pt2[0] = odom.pose.pose.position.x
         pt2[1] = odom.pose.pose.position.y
         orientation_q = odom.pose.pose.orientation
 
         orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
         (_, _, yaw) = euler_from_quaternion(orientation_list)
-
         pt2[2] = yaw
 
-        r1 = np.arctan2(pt2[1]-pt1[1], pt2[0]-pt1[0]) - pt1[2]
-        tr = np.sqrt((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)
-        r2 = pt2[2] - pt1[2] - r1
+        if read_first_odom:
+            r1 = np.arctan2(pt2[1]-pt1[1], pt2[0]-pt1[0]) - pt1[2]
+            tr = np.sqrt((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)
+            r2 = pt2[2] - pt1[2] - r1
+            godom = OdometryData(r1, tr, r2)
 
-        print("r1: " + str(r1) + " tr:" + str(tr) + " r2:" + str(r2))
+        read_first_odom = True
 
 def main():
     '''Main function of the program.
@@ -65,6 +82,8 @@ def main():
     If you are unsure about the input and return values of functions you
     should read their documentation which tells you the expected dimensions.
     '''
+    global gscan
+    global godom
 
     rospy.init_node('slam', anonymous=True)
 
@@ -73,28 +92,29 @@ def main():
     t1 = int(str(rospy.Time.now())) # t
 
     # sensors and map subscribtion
-    # rospy.Subscriber("/scan", LaserScan, lidar_callback)
+    rospy.Subscriber("/scan", LaserScan, lidar_callback)
     rospy.Subscriber("/odom", Odometry, odom_callback)
     # map_pub = rospy.Publisher('/map', PointCloud2, queue_size=10)
 
     # how many particles
-    num_particles = 100
-
+    num_particles = 1
     noise = [0.005, 0.01, 0.005]
-
-    # initialize the particles array
-    num_landmarks = 0
-    particles = [Particle(num_particles, num_landmarks, noise) for _ in range(num_particles)]
+    particles = [Particle(num_particles, noise) for _ in range(num_particles)]
 
     # set the axis dimensions
     fs = FastSlam(particles)
 
     rate = rospy.Rate(FREQ) # rate of the loop
+    i = 0
     while not rospy.is_shutdown():
-        odom = OdometryData(r1, tr, r2)
-        sensor = [1, 2, 3]
-        fs.fast_slam(odom, sensor)
+        i += 1
+        print("hey", i)
+        if godom and gscan:
+            fs.fast_slam(godom, gscan)
+            godom = False
+            gscan = False
 
+        # cv.waitKey(INTERVAL_IN_MS)
         rate.sleep()
 
 

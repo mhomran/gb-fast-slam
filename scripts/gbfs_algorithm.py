@@ -7,29 +7,29 @@ class FastSlam:
         self.particles = particles
         
     def fast_slam(self, odom, sensor):
-            '''Executes one iteration of the prediction-correction-resampling loop of FastSLAM.
+        '''Executes one iteration of the prediction-correction-resampling loop of FastSLAM.
 
-            Returns the plot objects to be drawn for the current frame.
-            '''
+        Returns the plot objects to be drawn for the current frame.
+        '''
 
-            # Perform the prediction step of the particle filter
-            for particle in self.particles:
-                particle.motion_update(odom)
+        # Perform the prediction step of the particle filter
+        for particle in self.particles:
+            particle.motion_update(odom)
 
-            # Perform the correction step of the particle filter
-            for particle in self.particles:
-                particle.sensor_update(sensor)
+        # Perform the correction step of the particle filter
+        for particle in self.particles:
+            particle.sensor_update(sensor)
 
-            # Resample the particle set
-            # Use the "number of effective particles" approach to resample only when
-            # necessary. This approach reduces the risk of particle depletion.
-            # For details, see Section IV.B of
-            # http://www2.informatik.uni-freiburg.de/~burgard/postscripts/grisetti05icra.pdf
-            s = sum([particle.weight for particle in self.particles])
-            neff = 1. / sum([(particle.weight/s) ** 2 for particle in self.particles])
-            if neff < len(self.particles) / 2.:
-                print ("resample")
-                self.particles = self.resample(self.particles)
+        # Resample the particle set
+        # Use the "number of effective particles" approach to resample only when
+        # necessary. This approach reduces the risk of particle depletion.
+        # For details, see Section IV.B of
+        # http://www2.informatik.uni-freiburg.de/~burgard/postscripts/grisetti05icra.pdf
+        s = sum([particle.weight for particle in self.particles])
+        neff = 1. / sum([(particle.weight/s) ** 2 for particle in self.particles])
+        if neff < len(self.particles) / 2.:
+            print ("resample")
+            self.particles = self.resample(self.particles)
 
     def resample(particles):
         """Resample the set of particles.
