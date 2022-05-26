@@ -44,21 +44,18 @@ class RayCaster:
 
   def _is_collided(self, p):
     """
-    Description: check if a certain point is collided with
+    Description: check if (a) certain point(s) is/are collided with
     an obstacle in the map.
 
     Input:
-      - p: the point to be checked (x, y).
+      - p: the onject to be checked (x, y).
 
     Output: 
-      - is_collided: True if collided, False otherwise
+      - True if collided, False otherwise
     """
-    is_collided = False
+    X, Y = p
 
-    if self.map[p[1]][p[0]] > self.occ_th:
-      is_collided = True
-    
-    return is_collided
+    return self.map[Y][X] > self.occ_th
 
   def _calculate_dist(self, p1, p2):
     """
@@ -106,36 +103,32 @@ class RayCaster:
       img = cv.cvtColor(img.astype(np.uint8),cv.COLOR_GRAY2RGB)
   
     
-    # +1 because the measurement at the original pose
-    measurements = np.ones((end_angle-start_angle)//angle_increment + 1) * -1
+    measurements = np.ones((end_angle-start_angle)//angle_increment) * -1
 
-    for i, angle in enumerate(range(start_angle, end_angle, angle_increment)):
-      for dst in range(start_len, end_len + 1):
-        tobe_checked_x = x + int(dst * np.cos(np.radians(angle)))
-        if not (0 <= tobe_checked_x < self.map.shape[1]):
-          break 
-        
-        tobe_checked_y = y + int(dst * np.sin(np.radians(angle)))
-        if not (0 <= tobe_checked_y < self.map.shape[0]):
-          break 
-        
-        tobe_checked = (tobe_checked_x, tobe_checked_y)
-        
-        if show_rays:
-          cv.circle(img, tobe_checked, 1, BGR_RED_COLOR, -1)
-        
-        if self._is_collided(tobe_checked): 
-          measurements[i] = dst  
-          
-          if show_collided:
-            cv.circle(img, tobe_checked, 2, BGR_BLUE_COLOR, -1)
+    angles = np.arrange(start_angle, end_angle, angle_increment)
+    cos_vec = np.cos(np.radians(angles)).reshape(-1, 1)
+    sin_vec = np.sin(np.radians(angles)).reshape(-1, 1)
+    dst_vec = np.arrange(start_len, end_len, 1).reshape(1, -1)
+    X_org = int(cos_vec @ dst_vec)
+    Y_org = int(sin_vec @ dst_vec)
 
-          # no need to progress with that ray since it's collided
-          break 
-      
+    X = x + X_org
+    Y = y + Y_org
+    X_Y = (X, Y)
 
-    if show_rays or show_collided:
-      cv.circle(img, (x, y), 2, BGR_GREEN_COLOR, 5)
+    X[0 > X] = 0
+    X[X > self.map.shape[1]] = self.map.shape[1]-1
+    Y[0 > Y] = 0
+    Y[Y > self.map.shape[0]] = self.map.shape[0]-1
+
+    collision = self._is_collided(X_Y)
+    dst_idx = np.argmax(collision, axis=-1)
+    mask_collided = np.any(collision, axis=-1)
+    dst = dst_vec[dst_idx]
+    measurements[mask_collided] = dst[mask_collided]
+
+    if show_rays:
+      img[Y][X] = BGR_RED_COLOR
       cv.imshow("Ray Casting", img)
 
     return measurements    
