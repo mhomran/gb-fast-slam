@@ -13,12 +13,11 @@ ms_to_sec = lambda x: x * (10**-3)
 ms_to_ns = lambda x: x * (10**6)
 s_to_ns = lambda x: x * (10**9)
 
-INTERVAL_IN_MS = 50
+INTERVAL_IN_MS = 5
 INTERVAL_IN_S = ms_to_sec(INTERVAL_IN_MS)
 INTERVAL_IN_NS = ms_to_ns(INTERVAL_IN_MS)
 
 FREQ = 1/INTERVAL_IN_S
-print(FREQ)
 
 
 t1 = 0 # t
@@ -59,15 +58,16 @@ def odom_callback(odom):
         pt2[1] = odom.pose.pose.position.y
         orientation_q = odom.pose.pose.orientation
 
-        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
-        (_, _, yaw) = euler_from_quaternion(orientation_list)
-        pt2[2] = yaw
+        orientation_list = [orientation_q.w, orientation_q.x, orientation_q.y, orientation_q.z]
+        (theta, _, _) = euler_from_quaternion(orientation_list)
+        pt2[2] = theta
 
         if read_first_odom:
-            r1 = np.arctan2(pt2[1]-pt1[1], pt2[0]-pt1[0]) - pt1[2]
             tr = np.sqrt((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)
+            r1 = np.arctan2(pt2[1]-pt1[1], pt2[0]-pt1[0]) - pt1[2]
             r2 = pt2[2] - pt1[2] - r1
             godom = OdometryData(r1, tr, r2)
+            print(pt2)
 
         read_first_odom = True
 
@@ -94,27 +94,23 @@ def main():
     # sensors and map subscribtion
     rospy.Subscriber("/scan", LaserScan, lidar_callback)
     rospy.Subscriber("/odom", Odometry, odom_callback)
-    # map_pub = rospy.Publisher('/map', PointCloud2, queue_size=10)
 
     # how many particles
     num_particles = 1
-    noise = [0.005, 0.01, 0.005]
+    noise = [0.000, 0.00, 0.000]
     particles = [Particle(num_particles, noise) for _ in range(num_particles)]
 
     # set the axis dimensions
     fs = FastSlam(particles)
 
     rate = rospy.Rate(FREQ) # rate of the loop
-    i = 0
     while not rospy.is_shutdown():
-        i += 1
-        print("hey", i)
         if godom and gscan:
             fs.fast_slam(godom, gscan)
             godom = False
             gscan = False
 
-        # cv.waitKey(INTERVAL_IN_MS)
+        cv.waitKey(1)
         rate.sleep()
 
 

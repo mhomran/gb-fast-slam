@@ -40,8 +40,8 @@ class Particle(object):
         """Predict the new pose of the robot"""
 
         odom.tr /= self.pixel_size
-        odom.r1 = int(np.degrees(odom.r1))
-        odom.r2 = int(np.degrees(odom.r2))
+        odom.r1 = np.degrees(odom.r1)
+        odom.r2 = np.degrees(odom.r2)
 
         # append the old position
         self.trajectory.append(self.pose)
@@ -61,9 +61,9 @@ class Particle(object):
         y_new = self.pose[1] + translation_noisy * sin(self.pose[2] + delta_rot1_noisy)
         theta_new = normalize_angle(self.pose[2] + delta_rot1_noisy + delta_rot2_noisy)
 
-        self.pose = np.array([int(x_new), int(y_new), int(theta_new)])
-
-        print(self.pose)
+        self.pose = np.array([x_new, y_new, theta_new])
+        
+        # print(int(self.pose[0]), int(self.pose[1]), int(self.pose[2]))
 
 
 
@@ -77,7 +77,7 @@ class Particle(object):
         """
 
         self.ray_caster.cast(self.pose, scan,
-        show_rays=False, show_collided=False)
+        show_rays=True)
 
 
 def normalize_angle(angle):
