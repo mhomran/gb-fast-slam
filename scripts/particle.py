@@ -60,13 +60,13 @@ class Particle(object):
         
         # Estimate of the new position of the Particle
         x_new = self.pose[0] + odom.tr * cos(self.pose[2] + odom.r1)
-        print(sin(self.pose[2] + odom.r1))
+        #print(sin(self.pose[2] + odom.r1))
         y_new = self.pose[1] + odom.tr * sin(self.pose[2] + odom.r1)
         theta_new = normalize_angle(self.pose[2] + odom.r1 + odom.r2)
 
         self.pose = np.array([x_new, y_new, theta_new])
         
-        print(round(self.pose[0], 3), round(self.pose[1], 3), round(np.degrees(self.pose[2]), 3))
+        #print(round(self.pose[0], 3), round(self.pose[1], 3), round(np.degrees(self.pose[2]), 3))
 
 
 

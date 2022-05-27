@@ -13,7 +13,7 @@ ms_to_sec = lambda x: x * (10**-3)
 ms_to_ns = lambda x: x * (10**6)
 s_to_ns = lambda x: x * (10**9)
 
-INTERVAL_IN_MS = 1000
+INTERVAL_IN_MS = 5000
 INTERVAL_IN_S = ms_to_sec(INTERVAL_IN_MS)
 INTERVAL_IN_NS = ms_to_ns(INTERVAL_IN_MS)
 
@@ -48,35 +48,47 @@ def odom_callback(odom):
     global gscan
     global read_first_odom
     global fs
-
+    
     t2 = int(str(odom.header.stamp)) 
     
     if t2 - t1 >= INTERVAL_IN_NS:
+        # print(odom.pose)
+        # advance time
         t1 = t2
 
+        # advance readings
         pt1[:] = pt2[:]
             
+        # get new readings  
         pt2[0] = odom.pose.pose.position.x
         pt2[1] = odom.pose.pose.position.y
         orientation_q = odom.pose.pose.orientation
-
+        # new theta
         orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
         (_, _, theta) = euler_from_quaternion(orientation_list)
         pt2[2] = theta
-
+        print('New odometry:', pt2)
+        print('theta, theta (deg):', theta, np.degrees(theta))
+        # only executed when there is a previous reading
+        # not in the first callback
         if read_first_odom:
+            # calculate s1, t, s2
+            # translation
             tr = np.sqrt((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)
             ydiff = np.around(pt2[1]-pt1[1], 2)
             xdiff = np.around(pt2[0]-pt1[0], 2)
+            # initial rotation
             r1 = np.arctan2(ydiff, xdiff) - pt1[2]
+            # final rotation
             r2 = pt2[2] - pt1[2] - r1
             godom = OdometryData(r1, tr, r2)
 
-            print(godom)
+
+            #print(godom)
         if godom and gscan:
             fs.fast_slam(godom, gscan)
-            godom = False
-            gscan = False
+            godom = False # None
+            gscan = False # None
 
         cv.waitKey(1)
         
@@ -109,7 +121,7 @@ def main():
 
     # how many particles
     num_particles = 1
-    noise = [0.000, 0.00, 0.000]
+    noise = [0.000, 0.000, 0.000]
     particles = [Particle(num_particles, noise) for _ in range(num_particles)]
 
     # set the axis dimensions
