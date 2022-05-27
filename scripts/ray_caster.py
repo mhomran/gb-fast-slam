@@ -17,6 +17,14 @@ GRAYSCALE_WHITE_COLOR = 255
 
 CM_IN_METER = 100
 
+class ScanObj:
+  def __init__(self, m, n, i, rn, rm):
+    self.angle_max = m
+    self.angle_min = n
+    self.angle_increment = i
+    self.range_min = rn
+    self.range_max = rm
+
 class RayCaster:
   def __init__(self, map, angle_range=250, angle_accuracy=2, 
   length_range=12, pixel_size=.05, occ_th=.9):
@@ -141,6 +149,7 @@ class RayCaster:
     
       img[Y, X] = BGR_RED_COLOR
       cv.imshow("Ray Casting", img)
+      
 
     return measurements    
 
@@ -154,6 +163,7 @@ if __name__ == '__main__':
 
   ray_caster = RayCaster(map)
 
-  measurements = ray_caster.cast(x=350, y=80, theta=30,
-  angle_max=90, angle_min=0,
-  show_rays=True)
+  measurements = ray_caster.cast(pose= np.array([0, 0, 0]),
+    scan= ScanObj(1, 0, 1, 0, 50), show_rays=True)
+
+  cv.waitkey(0)
