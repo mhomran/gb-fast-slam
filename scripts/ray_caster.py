@@ -95,9 +95,9 @@ class RayCaster:
       The ray that's not collided has a distance of -1
     """
     x, y, theta = pose
-    x = int(x)
-    y = int(y)
-    theta = int(theta)
+    x = int(x / self.pixel_size)
+    y = int(y / self.pixel_size)
+    theta = int(np.degrees(theta))
 
     if self.X_org is None:
       angle_min = scan.angle_min

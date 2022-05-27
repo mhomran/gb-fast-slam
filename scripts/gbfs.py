@@ -13,7 +13,7 @@ ms_to_sec = lambda x: x * (10**-3)
 ms_to_ns = lambda x: x * (10**6)
 s_to_ns = lambda x: x * (10**9)
 
-INTERVAL_IN_MS = 10000
+INTERVAL_IN_MS = 200
 INTERVAL_IN_S = ms_to_sec(INTERVAL_IN_MS)
 INTERVAL_IN_NS = ms_to_ns(INTERVAL_IN_MS)
 
@@ -90,8 +90,8 @@ def odom_callback(odom):
             fs.fast_slam(godom, gscan)
             godom = False # None
             gscan = False # None
+            cv.waitKey(1)
 
-        cv.waitKey(1)
         
         read_first_odom = True
 

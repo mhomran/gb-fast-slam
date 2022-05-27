@@ -17,8 +17,8 @@ class FastSlam:
             particle.motion_update(odom)
 
         # Perform the correction step of the particle filter
-        # for particle in self.particles:
-        #     particle.sensor_update(sensor)
+        for particle in self.particles:
+            particle.sensor_update(sensor)
 
         # Resample the particle set
         # Use the "number of effective particles" approach to resample only when
