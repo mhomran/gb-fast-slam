@@ -146,8 +146,16 @@ class RayCaster:
       img = self.map.copy()
       cv.normalize(img, img, 0, 255, cv.NORM_MINMAX)
       img = cv.cvtColor(img.astype(np.uint8),cv.COLOR_GRAY2RGB)
-    
       img[Y, X] = BGR_RED_COLOR
+      n = np.arange(X.shape[0])
+      X = X[n, dst_idx]
+      Y = Y[n, dst_idx]
+      img[Y, X] = BGR_BLUE_COLOR
+      for i, j in zip(X, Y):
+        cv.circle(img, (i, j), 2, BGR_BLUE_COLOR, 5)
+
+      cv.circle(img, (x, y), 2, BGR_GREEN_COLOR, 5)
+
       cv.imshow("Ray Casting", img)
       
 
