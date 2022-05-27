@@ -13,7 +13,7 @@ ms_to_sec = lambda x: x * (10**-3)
 ms_to_ns = lambda x: x * (10**6)
 s_to_ns = lambda x: x * (10**9)
 
-INTERVAL_IN_MS = 5000
+INTERVAL_IN_MS = 10000
 INTERVAL_IN_S = ms_to_sec(INTERVAL_IN_MS)
 INTERVAL_IN_NS = ms_to_ns(INTERVAL_IN_MS)
 
@@ -67,8 +67,8 @@ def odom_callback(odom):
         orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
         (_, _, theta) = euler_from_quaternion(orientation_list)
         pt2[2] = theta
-        print('New odometry:', pt2)
-        print('theta, theta (deg):', theta, np.degrees(theta))
+        #print('New odometry:', pt2)
+        #print('theta, theta (deg):', theta, np.degrees(theta))
         # only executed when there is a previous reading
         # not in the first callback
         if read_first_odom:
@@ -78,11 +78,12 @@ def odom_callback(odom):
             ydiff = np.around(pt2[1]-pt1[1], 2)
             xdiff = np.around(pt2[0]-pt1[0], 2)
             # initial rotation
-            r1 = np.arctan2(ydiff, xdiff) - pt1[2]
+            r1 = np.arctan2(ydiff, xdiff) - pt1[2] + np.pi
             # final rotation
             r2 = pt2[2] - pt1[2] - r1
             godom = OdometryData(r1, tr, r2)
-
+            #print(godom)
+            #print('\n')
 
             #print(godom)
         if godom and gscan:
