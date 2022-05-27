@@ -161,9 +161,9 @@ if __name__ == '__main__':
     map[i][599-i] = .5
     map[i][598-i] = .5
 
-  ray_caster = RayCaster(map)
+  ray_caster = RayCaster(map= map, pixel_size= 1)
 
-  measurements = ray_caster.cast(pose= np.array([0, 0, 0]),
-    scan= ScanObj(1, 0, 1, 0, 50), show_rays=True)
+  measurements = ray_caster.cast(pose= np.array([150, 300, 0]), 
+    scan= ScanObj(np.radians(360), 0, np.radians(1), 0, 160), show_rays=True)
 
-  cv.waitkey(0)
+  cv.waitKey(0)
