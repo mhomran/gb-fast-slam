@@ -30,6 +30,11 @@ class Particle(object):
         # initialize the landmarks aka the map
         self.prior = 0.5
         self.map = np.ones((600, 600)) * self.prior
+        for i in range(599):
+            self.map[300][i] = 1
+            self.map[300][i+1] = 1
+            self.map[i][599-i] = .5
+            self.map[i][598-i] = .5
 
         # sensor model
         self.ray_caster = RayCaster(self.map, pixel_size=pixel_size)

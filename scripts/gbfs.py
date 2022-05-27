@@ -123,7 +123,7 @@ def main():
     # how many particles
     num_particles = 1
     noise = [0.000, 0.000, 0.000]
-    particles = [Particle(num_particles, noise) for _ in range(num_particles)]
+    particles = [Particle(num_particles, noise, pixel_size=.01) for _ in range(num_particles)]
 
     # set the axis dimensions
     fs = FastSlam(particles)

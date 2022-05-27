@@ -103,9 +103,10 @@ class RayCaster:
       The ray that's not collided has a distance of -1
     """
     x, y, theta = pose
-    x = int(x / self.pixel_size)
-    y = int(y / self.pixel_size)
+    x = int(x / self.pixel_size) + 300
+    y = int(y / self.pixel_size) + 300
     theta = int(np.degrees(theta))
+    ranges = np.array(scan.ranges) / self.pixel_size
 
     if self.X_org is None:
       angle_min = scan.angle_min
@@ -151,13 +152,29 @@ class RayCaster:
       X = X[n, dst_idx]
       Y = Y[n, dst_idx]
       img[Y, X] = BGR_BLUE_COLOR
-      for i, j in zip(X, Y):
-        cv.circle(img, (i, j), 2, BGR_BLUE_COLOR, 5)
+      X = X - 1
+      Y = Y - 1
+      img[Y, X] = BGR_BLUE_COLOR
 
       cv.circle(img, (x, y), 2, BGR_GREEN_COLOR, 5)
 
-      cv.imshow("Ray Casting", img)
+
+      X = x + (ranges * self.cos_vec.reshape(-1)).astype(np.int)
+      Y = y + (ranges * self.sin_vec.reshape(-1)).astype(np.int)
+
+      X[X < 0] = 0
+      X[X >= self.map.shape[1]] = self.map.shape[1]-1
+      Y[Y < 0] = 0
+      Y[Y >= self.map.shape[0]] = self.map.shape[0]-1
+    
+      img[Y, X] = BGR_GREEN_COLOR
+      img[Y-1, X-1] = BGR_GREEN_COLOR
+      for i, j in zip(X, Y):
+        cv.circle(img, (i, j), 2, BGR_GREEN_COLOR, 5)
+
+
       
+      cv.imshow("Ray Casting", img)
 
     return measurements    
 
@@ -171,7 +188,7 @@ if __name__ == '__main__':
 
   ray_caster = RayCaster(map= map, pixel_size= 1)
 
-  measurements = ray_caster.cast(pose= np.array([150, 300, 0]), 
+  measurements = ray_caster.cast(pose= np.array([50, 300, 0]), 
     scan= ScanObj(np.radians(360), 0, np.radians(1), 0, 160), show_rays=True)
 
   cv.waitKey(0)
