@@ -13,7 +13,7 @@ ms_to_sec = lambda x: x * (10**-3)
 ms_to_ns = lambda x: x * (10**6)
 s_to_ns = lambda x: x * (10**9)
 
-INTERVAL_IN_MS = 5
+INTERVAL_IN_MS = 1000
 INTERVAL_IN_S = ms_to_sec(INTERVAL_IN_MS)
 INTERVAL_IN_NS = ms_to_ns(INTERVAL_IN_MS)
 
@@ -45,7 +45,9 @@ def odom_callback(odom):
     global tr
     global r2
     global godom
+    global gscan
     global read_first_odom
+    global fs
 
     t2 = int(str(odom.header.stamp)) 
     
@@ -58,17 +60,26 @@ def odom_callback(odom):
         pt2[1] = odom.pose.pose.position.y
         orientation_q = odom.pose.pose.orientation
 
-        orientation_list = [orientation_q.w, orientation_q.x, orientation_q.y, orientation_q.z]
-        (theta, _, _) = euler_from_quaternion(orientation_list)
+        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+        (_, _, theta) = euler_from_quaternion(orientation_list)
         pt2[2] = theta
 
         if read_first_odom:
             tr = np.sqrt((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)
-            r1 = np.arctan2(pt2[1]-pt1[1], pt2[0]-pt1[0]) - pt1[2]
+            ydiff = np.around(pt2[1]-pt1[1], 2)
+            xdiff = np.around(pt2[0]-pt1[0], 2)
+            r1 = np.arctan2(ydiff, xdiff) - pt1[2]
             r2 = pt2[2] - pt1[2] - r1
             godom = OdometryData(r1, tr, r2)
-            print(pt2)
 
+            print(godom)
+        if godom and gscan:
+            fs.fast_slam(godom, gscan)
+            godom = False
+            gscan = False
+
+        cv.waitKey(1)
+        
         read_first_odom = True
 
 def main():
@@ -84,6 +95,7 @@ def main():
     '''
     global gscan
     global godom
+    global fs
 
     rospy.init_node('slam', anonymous=True)
 
@@ -105,12 +117,12 @@ def main():
 
     rate = rospy.Rate(FREQ) # rate of the loop
     while not rospy.is_shutdown():
-        if godom and gscan:
-            fs.fast_slam(godom, gscan)
-            godom = False
-            gscan = False
+        # if godom and gscan:
+        #     fs.fast_slam(godom, gscan)
+        #     godom = False
+        #     gscan = False
 
-        cv.waitKey(1)
+        # cv.waitKey(1)
         rate.sleep()
 
 
