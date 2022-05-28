@@ -128,7 +128,7 @@ class RayCaster:
       self.Y_org = np.matmul(self.sin_vec, self.dst_vec).astype(np.int)
 
 
-    X = x + self.X_org * np.cos(theta) - self.Y_org * np.sin(theta) 
+    X = x + self.X_org * np.cos(theta) - self.Y_org * np.sin(theta)
     Y = y + self.X_org * np.sin(theta) + self.Y_org * np.cos(theta)
     X = X.astype(np.int)
     Y = Y.astype(np.int)
@@ -148,16 +148,18 @@ class RayCaster:
 
     if show_rays:
       img = self.map.copy()
-      cv.normalize(img, img, 0, 255, cv.NORM_MINMAX)
+      img[img < self.occ_th] = 0
+      img[img > self.occ_th] = 255
+
       img = cv.cvtColor(img.astype(np.uint8),cv.COLOR_GRAY2RGB)
       img[Y, X] = BGR_RED_COLOR
       n = np.arange(X.shape[0])
       X = X[n, dst_idx]
       Y = Y[n, dst_idx]
-      img[Y, X] = BGR_BLUE_COLOR
+      # img[Y, X] = BGR_BLUE_COLOR
       X = X - 1
       Y = Y - 1
-      img[Y, X] = BGR_BLUE_COLOR
+      # img[Y, X] = BGR_BLUE_COLOR
 
       # show robot
       cv.circle(img, (x, y), 15, BGR_GREEN_COLOR, 2)
@@ -188,7 +190,7 @@ class RayCaster:
       img = cv.flip(img, 0)
       cv.imshow("Ray Casting", img)
 
-    return measurements    
+    return measurements, mask_collided 
    
 
 if __name__ == '__main__':

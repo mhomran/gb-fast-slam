@@ -24,11 +24,14 @@ def inv_sensor_model(map, laser_eps, pf, free_lo, occ_lo):
         - map: map with logodds.
     """
     result_map = np.zeros(np.shape(map))
+    
+    pf_x, pf_y = pf
+    eps_x, eps_y = laser_eps
 
     # subsitute the rasters with free logodds on the result_map
-    result_map[pf] = free_lo
+    result_map[pf_x, pf_y] = free_lo
     # subsitute the laser_eps with occupied logodds
-    result_map[laser_eps] = occ_lo
+    result_map[eps_x, eps_y] = occ_lo
 
     return result_map
 
@@ -45,31 +48,29 @@ def get_laser_eps(map, pixel_size, pose, scan):
     Output:
       - eps: endpoints of the laser scan at the pose x
     """
-
-    measurements = scan.ranges / pixel_size
+    
     x, y, theta = pose
-    x //= pixel_size
-    y //= pixel_size
+    x = int(x / pixel_size) + 300
+    y = int(y / pixel_size) + 300
+    ranges = np.array(scan.ranges) / pixel_size
 
-    angle_min = scan.angle_min 
-    angle_max = scan.angle_max
-    angle_accuracy = scan.angle_increment
-    h, w = map.shape
+    theta = int(np.degrees(theta))
 
-    start_angle = theta + angle_min
-    end_angle = theta + angle_max
-
-    scan_thetas = np.arange(start_angle, end_angle+1, angle_accuracy)
-    scan_thetas = np.radians(scan_thetas)
+    start_angle = theta
+    end_angle = theta + 360
     
-    eps_x = x + (np.cos(scan_thetas) * measurements).astype(np.int) 
-    eps_y = y + (np.sin(scan_thetas) * measurements).astype(np.int) 
+    angles = np.arange(start_angle, end_angle, 1)
+    cos_vec = np.cos(np.radians(angles))
+    sin_vec = np.sin(np.radians(angles))
+
     
-    # out of the map borders
-    x_outbound = np.logical_or(eps_x < 0, eps_x >= w)
-    y_outbound = np.logical_or(eps_y < 0, eps_y >= h)
-    eps_y[y_outbound] = 0
-    eps_x[x_outbound] = 0
+    eps_x = x + (cos_vec * ranges).astype(np.int) 
+    eps_y = y + (sin_vec * ranges).astype(np.int) 
+    
+    eps_x[eps_x < 0] = 0
+    eps_x[eps_x >= map.shape[1]] = map.shape[1]-1
+    eps_y[eps_y < 0] = 0
+    eps_y[eps_y >= map.shape[0]] = map.shape[0]-1
 
     return eps_x, eps_y
 
@@ -89,19 +90,20 @@ def get_perceptual_field(pixel_size, pose, laser_eps):
     Y = []
 
     x, y, _ = pose
-    x //= pixel_size
-    y //= pixel_size
+    x = int(x / pixel_size) + 300
+    y = int(y / pixel_size) + 300
 
     # get the rasters from the robot_pose to the laser_eps
-    for i in range(len(laser_eps[0])):
-        raster_x, raster_y = line(x, y, laser_eps[0][i], laser_eps[1][i])
-        X.append(raster_x)
-        Y.append(raster_y)
+    eps_x, eps_y = laser_eps
+    for x2, y2 in zip(eps_x, eps_y):
+        raster_x, raster_y = line(x, y, x2, y2)
+        X.extend(raster_x)
+        Y.extend(raster_y)
 
     return X, Y
     
 
-def occupancy_grid_mapping(map, pixel_size, pose, scan, prior, free_lo, occ_lo):
+def occupancy_grid_update(map, pixel_size, pose, scan, prior, free_lo=.5, occ_lo=.9):
     """
     Description: update the map based on the occupancy grid 
     mapping algorithm.
@@ -122,6 +124,7 @@ def occupancy_grid_mapping(map, pixel_size, pose, scan, prior, free_lo, occ_lo):
     """
     laser_eps = get_laser_eps(map, pixel_size, pose, scan)
     pf = get_perceptual_field(pixel_size, pose, laser_eps)
-    map[pf] = map[pf] + inv_sensor_model(laser_eps, pf, free_lo, occ_lo) - prior
+    invmod = inv_sensor_model(map, laser_eps, pf, free_lo, occ_lo)
+    map[pf] = map[pf] + invmod[pf] - prior
     
     return map

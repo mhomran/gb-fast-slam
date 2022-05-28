@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import copy
+from occ_grid_mapping import occupancy_grid_update
 
 class FastSlam:
     def __init__(self, particles):
@@ -12,13 +13,11 @@ class FastSlam:
         Returns the plot objects to be drawn for the current frame.
         '''
 
-        # Perform the prediction step of the particle filter
         for particle in self.particles:
             particle.motion_update(odom)
-
-        # Perform the correction step of the particle filter
-        for particle in self.particles:
             particle.sensor_update(sensor)
+            particle.map = occupancy_grid_update(particle.map, 
+            particle.pixel_size, particle.pose, sensor, particle.prior)
 
         # Resample the particle set
         # Use the "number of effective particles" approach to resample only when
