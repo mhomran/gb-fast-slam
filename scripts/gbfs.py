@@ -130,12 +130,6 @@ def main():
 
     rate = rospy.Rate(FREQ) # rate of the loop
     while not rospy.is_shutdown():
-        # if godom and gscan:
-        #     fs.fast_slam(godom, gscan)
-        #     godom = False
-        #     gscan = False
-
-        # cv.waitKey(1)
         rate.sleep()
 
 

@@ -31,10 +31,14 @@ class Particle(object):
         self.prior = 0.5
         self.map = np.ones((600, 600)) * self.prior
         for i in range(599):
-            self.map[300][i] = 1
-            self.map[300][i+1] = 1
-            self.map[i][599-i] = .5
-            self.map[i][598-i] = .5
+            self.map[120][i] = 1
+            self.map[120][i+1] = 1
+            self.map[i][120] = 1
+            self.map[i+1][120] = 1
+            self.map[480][i] = 1
+            self.map[480][i+1] = 1
+            self.map[i][480] = 1
+            self.map[i+1][480] = 1
 
         # sensor model
         self.ray_caster = RayCaster(self.map, pixel_size=pixel_size)

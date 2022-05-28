@@ -5,6 +5,7 @@
 @data   : 25/03/2022
 """
 
+from math import degrees
 import cv2 as cv
 import numpy as np
 
@@ -174,6 +175,8 @@ class RayCaster:
 
 
       
+      img = cv.rotate(img, cv.ROTATE_90_CLOCKWISE)
+      img = cv.flip(img, 0)
       cv.imshow("Ray Casting", img)
 
     return measurements    
