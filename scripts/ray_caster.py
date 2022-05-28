@@ -106,7 +106,6 @@ class RayCaster:
     x, y, theta = pose
     x = int(x / self.pixel_size) + 300
     y = int(y / self.pixel_size) + 300
-    theta = int(np.degrees(theta))
     ranges = np.array(scan.ranges) / self.pixel_size
 
     if self.X_org is None:
@@ -114,8 +113,8 @@ class RayCaster:
       angle_max = scan.angle_max
       angle_increment = int(np.degrees(scan.angle_increment))
 
-      start_angle = theta + int(np.degrees(angle_min))
-      end_angle = theta + int(np.degrees(angle_max))
+      start_angle = int(np.degrees(angle_min))
+      end_angle = int(np.degrees(angle_max))
       start_len = int(scan.range_min / self.pixel_size) 
       end_len = int(scan.range_max / self.pixel_size) 
       
@@ -128,8 +127,11 @@ class RayCaster:
       self.X_org = np.matmul(self.cos_vec, self.dst_vec).astype(np.int)
       self.Y_org = np.matmul(self.sin_vec, self.dst_vec).astype(np.int)
 
-    X = x + self.X_org
-    Y = y + self.Y_org
+
+    X = x + self.X_org * np.cos(theta) - self.Y_org * np.sin(theta) 
+    Y = y + self.X_org * np.sin(theta) + self.Y_org * np.cos(theta)
+    X = X.astype(np.int)
+    Y = Y.astype(np.int)
     X_Y = (X, Y)
 
     X[X < 0] = 0
@@ -157,19 +159,26 @@ class RayCaster:
       Y = Y - 1
       img[Y, X] = BGR_BLUE_COLOR
 
-      cv.circle(img, (x, y), 2, BGR_GREEN_COLOR, 5)
+      # show robot
+      cv.circle(img, (x, y), 15, BGR_GREEN_COLOR, 2)
+      pt1 = (x, y)
+      pt2 = (x + 15 * np.cos(theta), y + 15 * np.sin(theta))
+      cv.line(img, pt1, pt2, BGR_GREEN_COLOR, 2)
+      
+      rot = int(round(np.degrees(-theta)))
+      X = ranges * np.roll(self.cos_vec.reshape(-1), rot)
+      Y = ranges * np.roll(self.sin_vec.reshape(-1), rot)
 
-
-      X = x + (ranges * self.cos_vec.reshape(-1)).astype(np.int)
-      Y = y + (ranges * self.sin_vec.reshape(-1)).astype(np.int)
+      X = x + X
+      Y = y + Y
+      X = X.astype(np.int)
+      Y = Y.astype(np.int)
 
       X[X < 0] = 0
       X[X >= self.map.shape[1]] = self.map.shape[1]-1
       Y[Y < 0] = 0
       Y[Y >= self.map.shape[0]] = self.map.shape[0]-1
     
-      img[Y, X] = BGR_GREEN_COLOR
-      img[Y-1, X-1] = BGR_GREEN_COLOR
       for i, j in zip(X, Y):
         cv.circle(img, (i, j), 2, BGR_GREEN_COLOR, 5)
 
@@ -180,6 +189,7 @@ class RayCaster:
       cv.imshow("Ray Casting", img)
 
     return measurements    
+   
 
 if __name__ == '__main__':
   map = np.zeros((600, 600))

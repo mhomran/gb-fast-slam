@@ -78,7 +78,7 @@ def odom_callback(odom):
             ydiff = np.around(pt2[1]-pt1[1], 2)
             xdiff = np.around(pt2[0]-pt1[0], 2)
             # initial rotation
-            r1 = np.arctan2(ydiff, xdiff) - pt1[2] + np.pi
+            r1 = np.arctan2(ydiff, xdiff) - pt1[2]
             # final rotation
             r2 = pt2[2] - pt1[2] - r1
             godom = OdometryData(r1, tr, r2)
