@@ -184,7 +184,6 @@ class RayCaster:
       for i, j in zip(X, Y):
         cv.circle(img, (i, j), 2, BGR_GREEN_COLOR, 5)
 
-
       
       img = cv.rotate(img, cv.ROTATE_90_CLOCKWISE)
       img = cv.flip(img, 0)

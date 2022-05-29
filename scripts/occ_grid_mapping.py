@@ -54,18 +54,23 @@ def get_laser_eps(map, pixel_size, pose, scan):
     y = int(y / pixel_size) + 300
     ranges = np.array(scan.ranges) / pixel_size
 
-    theta = int(np.degrees(theta))
+    # theta = int(np.degrees(-theta))
 
-    start_angle = theta
-    end_angle = theta + 360
+    start_angle = 0
+    end_angle = 360
     
     angles = np.arange(start_angle, end_angle, 1)
     cos_vec = np.cos(np.radians(angles))
     sin_vec = np.sin(np.radians(angles))
 
-    
-    eps_x = x + (cos_vec * ranges).astype(np.int) 
-    eps_y = y + (sin_vec * ranges).astype(np.int) 
+    rot = int(round(np.degrees(-theta)))
+    X = ranges * np.roll(cos_vec.reshape(-1), rot)
+    Y = ranges * np.roll(sin_vec.reshape(-1), rot)
+
+    eps_x = x + X
+    eps_y = y + Y
+    eps_x = eps_x.astype(np.int)
+    eps_y = eps_y.astype(np.int)
     
     eps_x[eps_x < 0] = 0
     eps_x[eps_x >= map.shape[1]] = map.shape[1]-1

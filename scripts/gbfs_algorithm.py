@@ -24,11 +24,11 @@ class FastSlam:
         # necessary. This approach reduces the risk of particle depletion.
         # For details, see Section IV.B of
         # http://www2.informatik.uni-freiburg.de/~burgard/postscripts/grisetti05icra.pdf
-        # s = sum([particle.weight for particle in self.particles])
-        # neff = 1. / sum([(particle.weight/s) ** 2 for particle in self.particles])
-        # if neff < len(self.particles) / 2.:
-        #     print ("resample")
-        #     self.particles = self.resample(self.particles)
+        s = sum([particle.weight for particle in self.particles])
+        neff = 1. / sum([(particle.weight/s) ** 2 for particle in self.particles])
+        if neff < len(self.particles) / 2.:
+            print ("resample")
+            self.particles = self.resample(self.particles)
 
     def resample(particles):
         """Resample the set of particles.

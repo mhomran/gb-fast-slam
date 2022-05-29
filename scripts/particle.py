@@ -2,6 +2,7 @@ import numpy as np
 import random
 from math import pi, sin, cos
 from ray_caster import RayCaster
+import cv2 as cv
 
 class Particle(object):
     """Particle for tracking a robot with a particle filter.
@@ -27,9 +28,11 @@ class Particle(object):
         # Trajectory of the particle
         self.trajectory = []
 
-        # initialize the landmarks aka the map
+        # initialize the grid map
         self.prior = 0.5
         self.map = np.ones((600, 600)) * self.prior
+        self.trajectory_map = np.zeros((600, 600), dtype=np.uint8) 
+
         # for i in range(599):
         #     self.map[120][i] = 1
         #     self.map[120][i+1] = 1
@@ -75,7 +78,12 @@ class Particle(object):
 
         self.pose = np.array([x_new, y_new, theta_new])
         
-        #print(round(self.pose[0], 3), round(self.pose[1], 3), round(np.degrees(self.pose[2]), 3))
+        y_new = int(y_new/self.pixel_size + 300)
+        x_new = int(x_new/self.pixel_size + 300)
+
+        # self.trajectory_map[y_new, x_new] = 255
+        # cv.imshow("trajectory", self.trajectory_map)
+        # print(round(self.pose[0], 3), round(self.pose[1], 3), round(np.degrees(self.pose[2]), 3))
 
 
 

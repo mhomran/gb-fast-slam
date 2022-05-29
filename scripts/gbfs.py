@@ -13,7 +13,7 @@ ms_to_sec = lambda x: x * (10**-3)
 ms_to_ns = lambda x: x * (10**6)
 s_to_ns = lambda x: x * (10**9)
 
-INTERVAL_IN_MS = 200
+INTERVAL_IN_MS = 1000
 INTERVAL_IN_S = ms_to_sec(INTERVAL_IN_MS)
 INTERVAL_IN_NS = ms_to_ns(INTERVAL_IN_MS)
 
@@ -121,7 +121,7 @@ def main():
     rospy.Subscriber("/odom", Odometry, odom_callback)
 
     # how many particles
-    num_particles = 1
+    num_particles = 5
     noise = [0.000, 0.000, 0.000]
     particles = [Particle(num_particles, noise, pixel_size=.01) for _ in range(num_particles)]
 
