@@ -3,6 +3,8 @@ import random
 from math import pi, sin, cos
 from ray_caster import RayCaster
 import cv2 as cv
+from skimage.draw import line
+
 
 class Particle(object):
     """Particle for tracking a robot with a particle filter.
@@ -30,23 +32,16 @@ class Particle(object):
 
         # initialize the grid map
         self.prior = 0.5
+        self.free_lo = .5
+        self.occ_lo = .9
+
         self.map = np.ones((600, 600)) * self.prior
         self.trajectory_map = np.zeros((600, 600), dtype=np.uint8) 
 
-        # for i in range(599):
-        #     self.map[120][i] = 1
-        #     self.map[120][i+1] = 1
-        #     self.map[i][120] = 1
-        #     self.map[i+1][120] = 1
-        #     self.map[480][i] = 1
-        #     self.map[480][i+1] = 1
-        #     self.map[i][480] = 1
-        #     self.map[i+1][480] = 1
-
         # sensor model
         self.ray_caster = RayCaster(self.map, pixel_size=pixel_size)
-
         self.pixel_size = pixel_size
+        self.laser_eps = []
 
 
 
@@ -96,13 +91,85 @@ class Particle(object):
             - scan : LaserMsg
         """
 
-        est, mask_collided = self.ray_caster.cast(self.pose, scan,
+        est, mask_collided, laser_eps = self.ray_caster.cast(self.pose, scan,
         show_rays=True)
         ranges = np.array(scan.ranges) / self.pixel_size
         
         error = np.sum(np.abs(est[mask_collided] - ranges[mask_collided]))
         
         self.weight = 1 / (1 + error)
+
+        self.laser_eps = laser_eps
+
+    def _inv_sensor_model(self, pf):
+        """
+        Description: Inverse Sensor Model for
+        Sonars Range Sensors
+
+        Input:
+            - pf: perceptual field
+
+        Output:
+            - map: map with logodds.
+        """
+        result_map = np.zeros(np.shape(self.map))
+        
+        pf_x, pf_y = pf
+        eps_x, eps_y = self.laser_eps
+
+        # subsitute the rasters with free logodds on the result_map
+        result_map[pf_y, pf_x] = self.free_lo
+        # subsitute the laser_eps with occupied logodds
+        result_map[eps_y, eps_x] = self.occ_lo
+
+        return result_map
+
+    def _get_perceptual_field(self, pose):
+        """
+        Description: get the perceptual field of a scan
+        
+        Input:
+            - pose: the robot pose (x, y, theta)
+            - laser_eps: laser endpoints
+        
+        Output:
+            - X: the x coordiantes of the field cells
+            - Y: the y coordinates of the field cells
+        """ 
+        X = []
+        Y = []
+
+        x, y, _ = pose
+        x = int(x / self.pixel_size) + 300
+        y = int(y / self.pixel_size) + 300
+
+        # get the rasters from the robot_pose to the laser_eps
+        eps_x, eps_y = self.laser_eps
+        for x2, y2 in zip(eps_x, eps_y):
+            raster_x, raster_y = line(x, y, x2, y2)
+            X.extend(raster_x)
+            Y.extend(raster_y)
+
+        return X, Y
+        
+
+    def map_update(self):
+        """
+        Description: update the map based on the occupancy grid 
+        mapping algorithm.
+
+        reference: slide 24 at http://ais.informatik.uni-freiburg.de/teaching/ws12/mapping/pdf/slam11-gridmaps.pdf 
+        
+        Input: 
+            - laser_eps: laser end points
+
+        Output:
+            - map: the updated map
+        """
+        pf = self._get_perceptual_field(self.pose)
+        invmod = self._inv_sensor_model(pf)
+        pf_x, pf_y = pf
+        self.map[pf_y, pf_x] = self.map[pf_y, pf_x] + invmod[pf_y, pf_x] - self.prior
 
 
 def normalize_angle(angle):

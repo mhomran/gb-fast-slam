@@ -1,7 +1,6 @@
 import numpy as np
 import random
 import copy
-from occ_grid_mapping import occupancy_grid_update
 
 class FastSlam:
     def __init__(self, particles):
@@ -16,9 +15,8 @@ class FastSlam:
         for particle in self.particles:
             particle.motion_update(odom)
             particle.sensor_update(sensor)
-            particle.map = occupancy_grid_update(particle.map, 
-            particle.pixel_size, particle.pose, sensor, particle.prior)
-
+            particle.map_update()
+            
         # Resample the particle set
         # Use the "number of effective particles" approach to resample only when
         # necessary. This approach reduces the risk of particle depletion.

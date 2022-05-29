@@ -152,7 +152,7 @@ class RayCaster:
       img[img > self.occ_th] = 255
 
       img = cv.cvtColor(img.astype(np.uint8),cv.COLOR_GRAY2RGB)
-      img[Y, X] = BGR_RED_COLOR
+      # img[Y, X] = BGR_RED_COLOR
       n = np.arange(X.shape[0])
       X = X[n, dst_idx]
       Y = Y[n, dst_idx]
@@ -168,28 +168,27 @@ class RayCaster:
       cv.line(img, pt1, pt2, BGR_GREEN_COLOR, 2)
       
       rot = int(round(np.degrees(-theta)))
-      X = ranges * np.roll(self.cos_vec.reshape(-1), rot)
-      Y = ranges * np.roll(self.sin_vec.reshape(-1), rot)
+      scan_epsx = ranges * np.roll(self.cos_vec.reshape(-1), rot)
+      scan_epsy = ranges * np.roll(self.sin_vec.reshape(-1), rot)
 
-      X = x + X
-      Y = y + Y
-      X = X.astype(np.int)
-      Y = Y.astype(np.int)
+      scan_epsx = x + scan_epsx
+      scan_epsy = y + scan_epsy
+      scan_epsx = scan_epsx.astype(np.int)
+      scan_epsy = scan_epsy.astype(np.int)
 
-      X[X < 0] = 0
-      X[X >= self.map.shape[1]] = self.map.shape[1]-1
-      Y[Y < 0] = 0
-      Y[Y >= self.map.shape[0]] = self.map.shape[0]-1
+      scan_epsx[scan_epsx < 0] = 0
+      scan_epsx[scan_epsx >= self.map.shape[1]] = self.map.shape[1]-1
+      scan_epsy[scan_epsy < 0] = 0
+      scan_epsy[scan_epsy >= self.map.shape[0]] = self.map.shape[0]-1
     
-      for i, j in zip(X, Y):
-        cv.circle(img, (i, j), 2, BGR_GREEN_COLOR, 5)
+      # for i, j in zip(scan_epsx, scan_epsy):
+      #   cv.circle(img, (i, j), 2, BGR_GREEN_COLOR, 5)
 
-      
       img = cv.rotate(img, cv.ROTATE_90_CLOCKWISE)
       img = cv.flip(img, 0)
       cv.imshow("Ray Casting", img)
 
-    return measurements, mask_collided 
+    return measurements, mask_collided, (scan_epsx, scan_epsy)
    
 
 if __name__ == '__main__':
