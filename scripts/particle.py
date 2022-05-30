@@ -58,6 +58,9 @@ class Particle(object):
         # append the old position
         self.trajectory.append(self.pose)
 
+        # Sample odometry motion model - slide 27
+        # @ http://ais.informatik.uni-freiburg.de/teaching/ss15/robotics/slides/06-motion-models.pdf
+        
         # noise sigma for delta_rot1
         delta_rot1_noisy = random.gauss(odom.r1, self.noise[0])
 
@@ -93,6 +96,9 @@ class Particle(object):
             - scan : LaserMsg
         """
 
+        # beam based sensor model - slide 5
+        # @ http://ais.informatik.uni-freiburg.de/teaching/ss11/robotics/slides/07-sensor-models.pdf
+       
         est, mask_collided, laser_eps = self.ray_caster.cast(self.pose, scan,
         show_rays=True)
         ranges = np.array(scan.ranges) / self.pixel_size
@@ -109,6 +115,9 @@ class Particle(object):
         """
         Description: Inverse Sensor Model for
         Sonars Range Sensors
+
+        Inverse Sensor Model for Sonars Range Sensors - slide 26
+        @ http://ais.informatik.uni-freiburg.de/teaching/ws12/mapping/pdf/slam11-gridmaps.pdf
 
         Input:
             - pf: perceptual field
@@ -161,8 +170,9 @@ class Particle(object):
         """
         Description: update the map based on the occupancy grid 
         mapping algorithm.
-
-        reference: slide 24 at http://ais.informatik.uni-freiburg.de/teaching/ws12/mapping/pdf/slam11-gridmaps.pdf 
+        
+        Occupancy Mapping Algorithm - slide 24 
+        @ http://ais.informatik.uni-freiburg.de/teaching/ws12/mapping/pdf/slam11-gridmaps.pdf 
         
         Input: 
             - laser_eps: laser end points

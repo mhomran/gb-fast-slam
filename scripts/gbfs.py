@@ -72,6 +72,9 @@ def odom_callback(odom):
         # only executed when there is a previous reading
         # not in the first callback
         if read_first_odom:
+            # Odometry model - slide 10
+            # @ http://ais.informatik.uni-freiburg.de/teaching/ss15/robotics/slides/06-motion-models.pdf
+            
             # calculate s1, t, s2
             # translation
             tr = np.sqrt((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)
