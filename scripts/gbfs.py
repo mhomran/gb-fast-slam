@@ -122,8 +122,9 @@ def main():
 
     # how many particles
     num_particles = 5
-    noise = [0.000, 0.000, 0.000]
-    particles = [Particle(num_particles, noise, pixel_size=.01) for _ in range(num_particles)]
+    noise = [0.001, 0.001, 0.000]
+    particles = [Particle(num_particles, noise, pixel_size=.01,
+    offset_x=450, offset_y=450,map_h=900, map_w=900) for _ in range(num_particles)]
 
     # set the axis dimensions
     fs = FastSlam(particles)

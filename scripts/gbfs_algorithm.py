@@ -28,7 +28,7 @@ class FastSlam:
             print ("resample")
             self.particles = self.resample(self.particles)
 
-    def resample(particles):
+    def resample(self, particles):
         """Resample the set of particles.
 
         A particle has a probability proportional to its weight to get

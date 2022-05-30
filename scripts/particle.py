@@ -15,12 +15,12 @@ class Particle(object):
     - a map consisting of landmarks
     """
 
-    def __init__(self, num_particles, noise, pixel_size=.005):
+    def __init__(self, num_particles, noise, pixel_size=.005, 
+    offset_x=300, offset_y=300, map_h=600, map_w=600):
         """Creates the particle and initializes location/orientation"""
         self.noise = noise
 
         # initialize robot pose at origin
-        # self.pose = np.vstack([300, 300, 0])
         self.pose = np.vstack([0, 0, 0])
 
 
@@ -34,12 +34,15 @@ class Particle(object):
         self.prior = 0.5
         self.free_lo = .5
         self.occ_lo = .9
+        self.offset_x = offset_x
+        self.offset_y = offset_y
 
-        self.map = np.ones((600, 600)) * self.prior
-        self.trajectory_map = np.zeros((600, 600), dtype=np.uint8) 
+        self.map = np.ones((map_h, map_w)) * self.prior
+        self.trajectory_map = np.zeros((map_h, map_w), dtype=np.uint8) 
 
         # sensor model
-        self.ray_caster = RayCaster(self.map, pixel_size=pixel_size)
+        self.ray_caster = RayCaster(self.map, pixel_size=pixel_size,
+        offset_x=offset_x, offset_y=offset_y)
         self.pixel_size = pixel_size
         self.laser_eps = []
 
@@ -66,15 +69,14 @@ class Particle(object):
 
         
         # Estimate of the new position of the Particle
-        x_new = self.pose[0] + odom.tr * cos(self.pose[2] + odom.r1)
-        #print(sin(self.pose[2] + odom.r1))
-        y_new = self.pose[1] + odom.tr * sin(self.pose[2] + odom.r1)
-        theta_new = normalize_angle(self.pose[2] + odom.r1 + odom.r2)
+        x_new = self.pose[0] + translation_noisy * cos(self.pose[2] + delta_rot1_noisy)
+        y_new = self.pose[1] + translation_noisy * sin(self.pose[2] + delta_rot1_noisy)
+        theta_new = normalize_angle(self.pose[2] + delta_rot1_noisy + delta_rot2_noisy)
 
         self.pose = np.array([x_new, y_new, theta_new])
         
-        y_new = int(y_new/self.pixel_size + 300)
-        x_new = int(x_new/self.pixel_size + 300)
+        y_new = int(y_new/self.pixel_size + self.offset_x)
+        x_new = int(x_new/self.pixel_size + self.offset_y)
 
         # self.trajectory_map[y_new, x_new] = 255
         # cv.imshow("trajectory", self.trajectory_map)
@@ -100,6 +102,8 @@ class Particle(object):
         self.weight = 1 / (1 + error)
 
         self.laser_eps = laser_eps
+
+        print(self.weight)
 
     def _inv_sensor_model(self, pf):
         """
@@ -140,8 +144,8 @@ class Particle(object):
         Y = []
 
         x, y, _ = pose
-        x = int(x / self.pixel_size) + 300
-        y = int(y / self.pixel_size) + 300
+        x = int(x / self.pixel_size) + self.offset_x
+        y = int(y / self.pixel_size) + self.offset_y
 
         # get the rasters from the robot_pose to the laser_eps
         eps_x, eps_y = self.laser_eps

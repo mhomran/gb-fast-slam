@@ -28,7 +28,7 @@ class ScanObj:
 
 class RayCaster:
   def __init__(self, map, angle_range=250, angle_accuracy=2, 
-  length_range=12, pixel_size=.05, occ_th=.9):
+  length_range=12, pixel_size=.05, occ_th=.9, offset_x=300, offset_y=300):
     """
     Description: constructor for the ray caster.
 
@@ -50,6 +50,8 @@ class RayCaster:
     self.pixel_size = pixel_size
     self.map = map
     self.occ_th = occ_th
+    self.offset_x = offset_x
+    self.offset_y = offset_y
 
     # reuse
     self.angles = None
@@ -104,8 +106,8 @@ class RayCaster:
       The ray that's not collided has a distance of -1
     """
     x, y, theta = pose
-    x = int(x / self.pixel_size) + 300
-    y = int(y / self.pixel_size) + 300
+    x = int(x / self.pixel_size) + self.offset_x
+    y = int(y / self.pixel_size) + self.offset_y
     ranges = np.array(scan.ranges) / self.pixel_size
 
     if self.X_org is None:
