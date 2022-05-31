@@ -20,7 +20,7 @@ source devel/setup.bash
 export TURTLEBOT3_MODEL=burger
 
 2- start ROS
-roslaunch turtlebot3_gazebo turtlebot3_empty_world.launch
+roslaunch turtlebot3_gazebo turtlebot3_stage_4.launch
 
 3- for motion commands
 roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch

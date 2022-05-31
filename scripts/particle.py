@@ -32,7 +32,7 @@ class Particle(object):
 
         # initialize the grid map
         self.prior = 0.5
-        self.free_lo = .5
+        self.free_lo = .4
         self.occ_lo = .9
         self.offset_x = offset_x
         self.offset_y = offset_y
@@ -50,10 +50,6 @@ class Particle(object):
 
     def motion_update(self, odom):
         """Predict the new pose of the robot"""
-
-        # odom.tr /= self.pixel_size
-        # odom.r1 = np.degrees(odom.r1)
-        # odom.r2 = np.degrees(odom.r2)
 
         # append the old position
         self.trajectory.append(self.pose)
@@ -81,9 +77,6 @@ class Particle(object):
         y_new = int(y_new/self.pixel_size + self.offset_x)
         x_new = int(x_new/self.pixel_size + self.offset_y)
 
-        # self.trajectory_map[y_new, x_new] = 255
-        # cv.imshow("trajectory", self.trajectory_map)
-        # print(round(self.pose[0], 3), round(self.pose[1], 3), round(np.degrees(self.pose[2]), 3))
 
 
 
@@ -108,8 +101,6 @@ class Particle(object):
         self.weight = 1 / (1 + error)
 
         self.laser_eps = laser_eps
-
-        print(self.weight)
 
     def _inv_sensor_model(self, pf):
         """

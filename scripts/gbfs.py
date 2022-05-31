@@ -52,7 +52,6 @@ def odom_callback(odom):
     t2 = int(str(odom.header.stamp)) 
     
     if t2 - t1 >= INTERVAL_IN_NS:
-        # print(odom.pose)
         # advance time
         t1 = t2
 
@@ -67,8 +66,6 @@ def odom_callback(odom):
         orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
         (_, _, theta) = euler_from_quaternion(orientation_list)
         pt2[2] = theta
-        #print('New odometry:', pt2)
-        #print('theta, theta (deg):', theta, np.degrees(theta))
         # only executed when there is a previous reading
         # not in the first callback
         if read_first_odom:
@@ -99,15 +96,8 @@ def odom_callback(odom):
         read_first_odom = True
 
 def main():
-    '''Main function of the program.
-
-    This script calls all the required functions in the correct order.
-    You can change the number of steps the filter runs for to ease the
-    debugging. You should however not change the order or calls of any
-    of the other lines, as it might break the framework.
-
-    If you are unsure about the input and return values of functions you
-    should read their documentation which tells you the expected dimensions.
+    '''
+    Description: the entry point for the program.
     '''
     global gscan
     global godom
